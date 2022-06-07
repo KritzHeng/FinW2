@@ -4,137 +4,122 @@ import { useState, useEffect } from "react";
 import "tailwindcss/tailwind.css";
 import { v4 as uuid } from "uuid";
 
-type TTodo = {
-  uuid?: string;
+type CurrencyPairs = {
+  [key: string]: CurrenciesDetail;
+};
+
+type CurrenciesDetail = {
+  // uuid?: string;
   token1: string;
   token2: string;
   binace: number;
   ftx: number;
   diff: number;
 };
-type InputToken = { token1: string; token2: string };
+// type InputToken = { tokenInput1: string; tokenInput2: string };
 
 const market_diff = () => {
   const [tokenInput1, setTokenInput1] = useState("");
   const [tokenInput2, setTokenInput2] = useState("");
-  const [dataList, setDataList] = useState<TTodo[]>([]);
+  // const [dataList, setDataList] = useState<TTodo[]>([]);
   // use key made dataListObject can't get same key
-  const [dataListObject, setDataListObject] = useState({});
+  const [dataListObject, setDataListObject] = useState<CurrencyPairs>({});
 
-  // const [dataList, setDataList] = useState<TTodo[]>([
-  //   {
-  //     uuid: "a-a",
-  //     token1: "BTC",
-  //     token2: "USDT",
-  //     binace: 1000,
-  //     ftx: 1,
-  //     diff: 10,
-  //   },
-  //   {
-  //     uuid: "b-b",
-  //     token1: "BNB",
-  //     token2: "USDT",
-  //     binace: 500,
-  //     ftx: 5,
-  //     diff: 50,
-  //   },
-  // ]);
-  // const [ftxData, setFtfData] = useState({});
-  // const [binanceData, setBinanceData] = useState({});
 
-// setDataListObject 
+  // setDataListObject
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("You are on the browser");
-
-      let savedDataList = window.localStorage.getItem("dataList");
-      console.log(savedDataList);
-      // console.log(savedDataList)
-      if (savedDataList) {
-        setDataListObject(JSON.parse(savedDataList))
-        // localStorage.setItem("dataList", JSON.parse(...savedDataList)); ;
-      } else {
-        setDataListObject(JSON.parse("{}"));
-        // localStorage.setItem("dataList", JSON.parse([])) ;
-      }
-      // 👉️ can use localStorage here
-    } else {
-      console.log("You are on the server");
-      // 👉️ can't use localStorage
-    }
+    // console.log(dataListObject)
+    getData();
   }, []);
 
-// interval
+  // interval
   useEffect(() => {
     const interval = setInterval(() => {
-        const a: TTodo[] = Promise.all(
-          Object.keys(dataListObject).map(async (key, index) =>{
+      const a: CurrencyPairs = Promise.all(
+        Object.keys(dataListObject).map(async (key, index) => {
+          // console.log(key)
           // dataListObject.map(async (item) => {
-            // console.log("localStorage", localStorage.getItem("dataList"));
-            const resFTX = await fetch(
-              `/api/ftx?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
-              {
-                method: "GET",
-              }
-            )
-              .then((response) => response.json())
-              .catch((error) => console.warn(error));
-            const resBINANCE = await fetch(
-              `/api/binance?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
-              {
-                method: "GET",
-              }
-            )
-              .then((response) => response.json())
-              .catch((error) => console.warn(error));
-            const percent =
-              ((resBINANCE.data.price - resFTX.data.result.price) /
-                resFTX.data.result.price) *
-              100;
-            let ob = {
-              uuid: dataListObject[key].uuid,
-              // bnb_usdt
-              token1: dataListObject[key].token1,
-              token2: dataListObject[key].token2,
-              binace: resBINANCE.data.price,
-              ftx: resFTX.data.result.price,
-              diff: percent,
-            };
-            const mappingData = {
-              ...dataListObject,
-              [`${dataListObject[key].token1}_${dataListObject[key].token2}`]: ob,
-            };
-            setDataListObject(mappingData);
-            return ob;
-          })
-        ).then((data) => setDataList(data));
-        console.log(dataListObject);
-        // console.log(...dataList);
-    }, 2000);
+          console.log(dataListObject);
+
+          // console.log("localStorage", localStorage.getItem("dataList"));
+          const resFTX = await fetch(
+            `/api/ftx?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
+            {
+              method: "GET",
+            }
+          )
+            .then((response) => response.json())
+            .catch((error) => console.warn(error));
+          const resBINANCE = await fetch(
+            `/api/binance?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
+            {
+              method: "GET",
+            }
+          )
+            .then((response) => response.json())
+            .catch((error) => console.warn(error));
+          const percent =
+            ((resBINANCE.data.price - resFTX.data.result.price) /
+              resFTX.data.result.price) *
+            100;
+          let ob: any = {
+            // uuid: dataListObject[key].uuid,
+            token1: dataListObject[key].token1,
+            token2: dataListObject[key].token2,
+            binace: resBINANCE.data.price,
+            ftx: resFTX.data.result.price,
+            diff: percent,
+          };
+          const mappingData = {
+            ...dataListObject,
+            [`${dataListObject[key].token1}_${dataListObject[key].token2}`]: ob,
+          };
+          // localStorage get
+          setDataListObject(mappingData);
+          window.localStorage.setItem("dataList", JSON.stringify(mappingData));
+          return ob;
+        })
+      );
+    }, 3000);
     return () => clearInterval(interval);
-  }, [dataList]);
+  }, [dataListObject]);
 
-  // เปลี่ยนเป็นuseeffect แล้วใช้interval
   const getData = async () => {
-    // e.preventDefault();
     try {
-      // console.log(...dataList);
-      console.log(dataListObject)
+      if (typeof window !== "undefined") {
+        // console.log("You are on the browser");
+  
+        let savedDataList = window.localStorage.getItem("dataList");
+        console.log(savedDataList);
+  
+        if (savedDataList) {
+          setDataListObject(JSON.parse(savedDataList));
+        } else {
+          setDataListObject(JSON.parse("{}"));
+        }
+      } else {
+        // console.log("You are on the server");
+      }
 
-      // const res = await axios.get("http://localhost:3000/");
-      // setData(res.data);
     } catch (error) {
       console.log(error);
     }
   };
-  const deleteData = async (uuid: string) => {
+
+  // deleteData in dataListObject
+  const deleteData = async (key: string) => {
     try {
-      console.log("deleteData");
-      setDataList((prevAllData) => {
-        return prevAllData.filter((dataList) => {
-          return dataList.uuid !== uuid;
-        });
-      });
+      // console.log(key);
+      // setDataList((prevAllData) => {
+      //   return prevAllData.filter((dataList) => {
+      //     return dataList.uuid !== uuid;
+      //   });
+      // });
+      const dataOb = dataListObject;
+      delete dataOb[key];
+      setDataListObject(dataOb);
+      window.localStorage.setItem("dataList", JSON.stringify(dataOb));
+      await getData();
     } catch (error) {
       console.error(error);
     }
@@ -193,7 +178,7 @@ const market_diff = () => {
       const mappingData = {
         ...dataListObject,
         [`${tokenInput1.toUpperCase()}_${tokenInput2.toUpperCase()}`]: {
-          uuid: uuid(),
+          // uuid: uuid(),
           token1: tokenInput1.toUpperCase(),
           token2: tokenInput2.toUpperCase(),
           binace: resBINANCE.data.price,
@@ -221,7 +206,7 @@ const market_diff = () => {
       console.log("haven't found data token");
     }
   }
-
+  // console.log("dataListLocalStorage: ", window.localStorage.getItem("dataList"));
   return (
     <div>
       <div className="text-black font-bold text-3xl py-2 px-5 rounded">
@@ -237,7 +222,6 @@ const market_diff = () => {
       <div className="px-5">
         <a>Token 1</a>
       </div>
-      {/* ???? size with input */}
 
       <div className="px-5">
         <input
@@ -265,9 +249,6 @@ const market_diff = () => {
         <button
           onClick={(e) => handleSubmit()}
           className="border-solid border-2 border-gray-400/100 px-10"
-
-          // type="submit"
-          // value="update"
         >
           Fetch
         </button>
@@ -317,12 +298,6 @@ const market_diff = () => {
         <a className="px-8 py-3">FTX</a>
         <a className="px-12 py-3">Diff</a>
         <a className="px-12 py-3">Action</a>
-        <button
-          className="border-solid border-2 border-gray-400/100 px-9 py-3"
-          onClick={() => getData()}
-        >
-          get
-        </button>
         <br></br>
         {/* {dataList.length >= 1
           ? dataList.map((v) => {
@@ -363,18 +338,23 @@ const market_diff = () => {
             })
           : "no item"
         } */}
+        {/* data from localStorage */}
         {Object.keys(dataListObject).length >= 1
           ? Object.keys(dataListObject).map((key, index) => {
               return (
                 <div key={key}>
                   <a className="px-12 py-3">{dataListObject[key].token1}</a>
                   <a className="px-12 py-3">{dataListObject[key].token2}</a>
-                  <a className="px-10 py-3">{Number(dataListObject[key].binace).toFixed(6)}</a>
-                  <a className="px-9 py-3">{Number(dataListObject[key].ftx).toFixed(6)}</a>
+                  <a className="px-10 py-3">
+                    {Number(dataListObject[key].binace).toFixed(6)}
+                  </a>
+                  <a className="px-9 py-3">
+                    {Number(dataListObject[key].ftx).toFixed(6)}
+                  </a>
                   <a className="px-9 py-3">{dataListObject[key].diff}</a>
                   <button
                     className="border-solid border-2 border-gray-400/100 px-9 py-3"
-                    onClick={() => deleteData(dataListObject[key].uuid)}
+                    onClick={() => deleteData(key)}
                   >
                     map delete
                   </button>

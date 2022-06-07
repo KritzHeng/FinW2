@@ -21,6 +21,6 @@ export default async function handler(
   // const resFtx = await axios.get(
   // `https://ftx.com/api/markets/symbol1?symbol2=${token1}/${token2}`
   // );
-  console.log(resFtx.result.price)
+  // console.log(resFtx.result.price)
   res.status(200).json({ data: resFtx });
 }
