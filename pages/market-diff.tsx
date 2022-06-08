@@ -25,7 +25,6 @@ const market_diff = () => {
   // use key made dataListObject can't get same key
   const [dataListObject, setDataListObject] = useState<CurrencyPairs>({});
 
-
   // setDataListObject
   useEffect(() => {
     // console.log(dataListObject)
@@ -35,51 +34,71 @@ const market_diff = () => {
   // interval
   useEffect(() => {
     const interval = setInterval(() => {
-      const a: CurrencyPairs = Promise.all(
-        Object.keys(dataListObject).map(async (key, index) => {
-          // console.log(key)
-          // dataListObject.map(async (item) => {
-          console.log(dataListObject);
+      let savedDataList = window.localStorage.getItem("dataList");
 
-          // console.log("localStorage", localStorage.getItem("dataList"));
-          const resFTX = await fetch(
-            `/api/ftx?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
-            {
-              method: "GET",
-            }
-          )
-            .then((response) => response.json())
-            .catch((error) => console.warn(error));
-          const resBINANCE = await fetch(
-            `/api/binance?symbol1=${dataListObject[key].token1}&symbol2=${dataListObject[key].token2}`,
-            {
-              method: "GET",
-            }
-          )
-            .then((response) => response.json())
-            .catch((error) => console.warn(error));
-          const percent =
-            ((resBINANCE.data.price - resFTX.data.result.price) /
-              resFTX.data.result.price) *
-            100;
-          let ob: any = {
-            // uuid: dataListObject[key].uuid,
-            token1: dataListObject[key].token1,
-            token2: dataListObject[key].token2,
-            binace: resBINANCE.data.price,
-            ftx: resFTX.data.result.price,
-            diff: percent,
-          };
-          const mappingData = {
-            ...dataListObject,
-            [`${dataListObject[key].token1}_${dataListObject[key].token2}`]: ob,
-          };
-          // localStorage get
-          setDataListObject(mappingData);
-          window.localStorage.setItem("dataList", JSON.stringify(mappingData));
-          return ob;
-        })
-      );
+      if (typeof window !== "undefined") {
+        // console.log("You are on the browser");
+
+        let savedDataList = window.localStorage.getItem("dataList");
+        // console.log(savedDataList);
+
+        if (savedDataList) {
+          const dataParse = JSON.parse(savedDataList);
+          const a: CurrencyPairs = Promise.all(
+            Object.keys(dataParse).map(async (key, index) => {
+              console.log(dataParse[key]);
+              // console.log(key)
+              // dataListObject.map(async (item) => {
+              // console.log(dataListObject);
+
+              // console.log("localStorage", localStorage.getItem("dataList"));
+              const resFTX = await fetch(
+                `/api/ftx?symbol1=${dataParse[key].token1}&symbol2=${dataParse[key].token2}`,
+                {
+                  method: "GET",
+                }
+              )
+                .then((response) => response.json())
+                .catch((error) => console.warn(error));
+              const resBINANCE = await fetch(
+                `/api/binance?symbol1=${dataParse[key].token1}&symbol2=${dataParse[key].token2}`,
+                {
+                  method: "GET",
+                }
+              )
+                .then((response) => response.json())
+                .catch((error) => console.warn(error));
+              const percent =
+                ((resBINANCE.data.price - resFTX.data.result.price) /
+                  resFTX.data.result.price) *
+                100;
+              let ob: any = {
+                // uuid: dataListObject[key].uuid,
+                token1: dataListObject[key].token1,
+                token2: dataListObject[key].token2,
+                binace: resBINANCE.data.price,
+                ftx: resFTX.data.result.price,
+                diff: percent,
+              };
+              const mappingData = {
+                ...dataListObject,
+                [`${dataListObject[key].token1}_${dataListObject[key].token2}`]:
+                  ob,
+              };
+              setDataListObject(mappingData);
+              window.localStorage.setItem(
+                "dataList",
+                JSON.stringify(mappingData)
+              );
+              return ob;
+            })
+          );
+          console.log(JSON.parse(savedDataList));
+          // setDataListObject(JSON.parse(savedDataList));
+        } else {
+          // setDataListObject(JSON.parse("{}"));
+        }
+      }
     }, 3000);
     return () => clearInterval(interval);
   }, [dataListObject]);
@@ -88,11 +107,12 @@ const market_diff = () => {
     try {
       if (typeof window !== "undefined") {
         // console.log("You are on the browser");
-  
+
         let savedDataList = window.localStorage.getItem("dataList");
         console.log(savedDataList);
-  
+
         if (savedDataList) {
+          console.log(JSON.parse(savedDataList));
           setDataListObject(JSON.parse(savedDataList));
         } else {
           setDataListObject(JSON.parse("{}"));
@@ -100,7 +120,6 @@ const market_diff = () => {
       } else {
         // console.log("You are on the server");
       }
-
     } catch (error) {
       console.log(error);
     }
@@ -149,6 +168,7 @@ const market_diff = () => {
   //   setBinanceData(res.data.price);
   //   console.log(binanceData);
   // };
+
   //  get ข้อมูล เพื่อเช็คคู่tokenซ้ำ(ไม่เขียนเพิ่ม)
   // submitแล้วข้อมูลเขียนบ้าง ไม่เขียนบ้าง
   async function handleSubmit() {
@@ -175,33 +195,29 @@ const market_diff = () => {
           resFTX.data.result.price) *
         100;
 
-      const mappingData = {
-        ...dataListObject,
-        [`${tokenInput1.toUpperCase()}_${tokenInput2.toUpperCase()}`]: {
-          // uuid: uuid(),
-          token1: tokenInput1.toUpperCase(),
-          token2: tokenInput2.toUpperCase(),
-          binace: resBINANCE.data.price,
-          ftx: resFTX.data.result.price,
-          diff: percent,
-        },
-      };
-      setDataListObject(mappingData);
-      window.localStorage.setItem("dataList", JSON.stringify(mappingData));
-      // setDataList([
-      //   ...dataList,
-      //   {
-      //     uuid: uuid(),
-      //     token1: tokenInput1.toUpperCase(),
-      //     token2: tokenInput2.toUpperCase(),
-      //     binace: resBINANCE.data.price,
-      //     ftx: resFTX.data.result.price,
-      //     diff: percent,
-      //   },
-      // ]);
+      let savedDataList = window.localStorage.getItem("dataList");
 
-      // setData(res)
-      await getData();
+      if (typeof window !== "undefined") {
+        // console.log("You are on the browser");
+        if (savedDataList) {
+          const dataParse = JSON.parse(savedDataList);
+          const mappingData = {
+            ...dataParse,
+            [`${tokenInput1.toUpperCase()}_${tokenInput2.toUpperCase()}`]: {
+              token1: tokenInput1.toUpperCase(),
+              token2: tokenInput2.toUpperCase(),
+              binace: resBINANCE.data.price,
+              ftx: resFTX.data.result.price,
+              diff: percent,
+            },
+          };
+          window.localStorage.setItem("dataList", JSON.stringify(mappingData));
+          await getData();
+          // setDataListObject(JSON.parse(savedDataList));
+        } else {
+          // setDataListObject(JSON.parse("{}"));
+        }
+      }
     } catch (error) {
       console.log("haven't found data token");
     }
